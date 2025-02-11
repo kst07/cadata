@@ -1,71 +1,71 @@
-import React from "react";
-import Box from "@mui/material/Box";
-import Drawer from "@mui/material/Drawer";
-import AppBar from "@mui/material/AppBar";
-import CssBaseline from "@mui/material/CssBaseline";
-import Toolbar from "@mui/material/Toolbar";
-import Typography from "@mui/material/Typography";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import Collapse from "@mui/material/Collapse";
-import ExpandLess from "@mui/icons-material/ExpandLess";
-import ExpandMore from "@mui/icons-material/ExpandMore";
-import CoffeeIcon from "@mui/icons-material/Coffee";
-import HomeIcon from "@mui/icons-material/Home";
-import MenuBookIcon from "@mui/icons-material/MenuBook";
-import BarChartIcon from "@mui/icons-material/BarChart";
-import InventoryIcon from "@mui/icons-material/Inventory";
-import GroupIcon from "@mui/icons-material/Group";
-import LogoutIcon from "@mui/icons-material/Logout";
-import MenuIcon from "@mui/icons-material/Menu";
-import Snackbar from "@mui/material/Snackbar";
-import Alert from "@mui/material/Alert"; // เพิ่ม Alert สำหรับแจ้งเตือน
-import AxiosInstance from './AxiosInstance';
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import React from "react"
+import Box from "@mui/material/Box"
+import Drawer from "@mui/material/Drawer"
+import AppBar from "@mui/material/AppBar"
+import CssBaseline from "@mui/material/CssBaseline"
+import Toolbar from "@mui/material/Toolbar"
+import Typography from "@mui/material/Typography"
+import List from "@mui/material/List"
+import ListItem from "@mui/material/ListItem"
+import ListItemButton from "@mui/material/ListItemButton"
+import ListItemIcon from "@mui/material/ListItemIcon"
+import ListItemText from "@mui/material/ListItemText"
+import Collapse from "@mui/material/Collapse"
+import ExpandLess from "@mui/icons-material/ExpandLess"
+import ExpandMore from "@mui/icons-material/ExpandMore"
+import CoffeeIcon from "@mui/icons-material/Coffee"
+import HomeIcon from "@mui/icons-material/Home"
+import MenuBookIcon from "@mui/icons-material/MenuBook"
+import BarChartIcon from "@mui/icons-material/BarChart"
+import InventoryIcon from "@mui/icons-material/Inventory"
+import GroupIcon from "@mui/icons-material/Group"
+import LogoutIcon from "@mui/icons-material/Logout"
+import MenuIcon from "@mui/icons-material/Menu"
+import Snackbar from "@mui/material/Snackbar"
+import Alert from "@mui/material/Alert" // เพิ่ม Alert สำหรับแจ้งเตือน
+import AxiosInstance from './AxiosInstance'
+import { Link, useLocation, useNavigate } from "react-router-dom"
 
 const drawerWidth = 240;
 
 export default function Navbar(props) {
-  const { content, username } = props;
-  const location = useLocation();
-  const path = location.pathname;
-  const navigate = useNavigate();
+  const { content, username } = props
+  const location = useLocation()
+  const path = location.pathname
+  const navigate = useNavigate()
 
-  const [openSummary, setOpenSummary] = React.useState(false);
-  const [openProducts, setOpenProducts] = React.useState(false);
-  const [openDrawer, setOpenDrawer] = React.useState(true);
-  const [openSnackbar, setOpenSnackbar] = React.useState(false); // สถานะ Snackbar
-  const [snackbarMessage, setSnackbarMessage] = React.useState(""); // ข้อความ Snackbar
-  const [snackbarSeverity, setSnackbarSeverity] = React.useState("success"); // ประเภท Snackbar (success, error, info, warning)
+  const [openSummary, setOpenSummary] = React.useState(false)
+  const [openProducts, setOpenProducts] = React.useState(false)
+  const [openDrawer, setOpenDrawer] = React.useState(true)
+  const [openSnackbar, setOpenSnackbar] = React.useState(false)// สถานะ Snackbar
+  const [snackbarMessage, setSnackbarMessage] = React.useState("") // ข้อความ Snackbar
+  const [snackbarSeverity, setSnackbarSeverity] = React.useState("success") // ประเภท Snackbar (success, error, info, warning)
 
   const logoutUser = () => {
-    AxiosInstance.post(`logoutall/`, {})
+    AxiosInstance.post("api/logout/")
       .then(() => {
-        localStorage.removeItem("Token");
-        setSnackbarMessage("ล็อกเอาท์สำเร็จ"); // ตั้งค่าข้อความแจ้งเตือน
-        setSnackbarSeverity("success"); // ตั้งค่าประเภทแจ้งเตือน
+        localStorage.removeItem("Token")
+        setSnackbarMessage("ล็อกเอาท์สำเร็จ") // ตั้งค่าข้อความแจ้งเตือน
+        setSnackbarSeverity("success") // ตั้งค่าประเภทแจ้งเตือน
         setOpenSnackbar(true); // เปิด Snackbar
         setTimeout(() => {
-          navigate('/');
-        }, 1000); // หน่วงเวลา 2 วินาทีก่อนเปลี่ยนหน้า
+          navigate('/')
+        }, 700)
       })
       .catch((error) => {
-        setSnackbarMessage("เกิดข้อผิดพลาดในการล็อกเอาท์"); // ตั้งค่าข้อความแจ้งเตือน
-        setSnackbarSeverity("error"); // ตั้งค่าประเภทแจ้งเตือน
-        setOpenSnackbar(true); // เปิด Snackbar
-      });
-  };
+        setSnackbarMessage("เกิดข้อผิดพลาดในการล็อกเอาท์")// ตั้งค่าข้อความแจ้งเตือน
+        setSnackbarSeverity("error") // ตั้งค่าประเภทแจ้งเตือน
+        setOpenSnackbar(true) // เปิด Snackbar
+      })
+  }
 
   const handleCloseSnackbar = () => {
     setOpenSnackbar(false); // ปิด Snackbar
-  };
+  }
 
   const toggleDrawer = () => {
-    setOpenDrawer(!openDrawer);
-  };
+    setOpenDrawer(!openDrawer)
+  }
 
   return (
     <Box sx={{ display: "flex" }}>
@@ -340,7 +340,7 @@ export default function Navbar(props) {
           flexGrow: 1,
           marginTop: "20px",
           borderRadius: 4,
-          boxShadow: "0px 8px 15px rgba(0, 0, 0, 0.2)",
+          // boxShadow: "0px 8px 15px rgba(0, 0, 0, 0.2)",
           typography: "body1",
           overflow: "hidden",
           transition: "width 0.3s ease-in-out, min-height 0.3s ease-in-out",
@@ -353,5 +353,5 @@ export default function Navbar(props) {
         {content}
       </Box>
     </Box>
-  );
+  )
 }

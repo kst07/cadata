@@ -1,368 +1,331 @@
-import { useState } from "react";
-import {
-    Box,
-    Button,
-    Typography,
-    Grid,
-    Card,
-    CardContent,
-    CardActions,
-    Snackbar,
-    Alert,
-    CardMedia,
-    IconButton,
-    Paper,
-    TextField,
-    Container,
-    InputAdornment,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Divider,
-} from "@mui/material";
+import { useState, useEffect } from "react";
+import AxiosInstance from "./AxiosInstance";
+import { Box, Button, Typography, Grid, Card, CardContent, CardMedia, IconButton, Paper, Container, Divider, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Snackbar, Alert } from "@mui/material";
 import { motion } from "framer-motion";
-import { Add, Remove, ShoppingCart, Delete } from "@mui/icons-material";
+import { ShoppingCart, Delete, Add, Remove } from "@mui/icons-material";
+
+const categories = [
+    { label: "ทั้งหมด", value: "all" },
+    { label: "กาแฟ", value: "coffee" },
+    { label: "ช็อคโกแลต", value: "chocolate" },
+    { label: "โกโก้", value: "cocoa" },
+    { label: "ชา", value: "tea" },
+    { label: "นม", value: "milk" },
+    { label: "ขนม", value: "bakery" }
+];
 
 const Inventory = () => {
-    const [products, setProducts] = useState([
-        {
-            id: 1,
-            name: "Espresso",
-            priceOptions: { iced: 60, blended: 70 },
-            stock: 10,
-            image: "https://via.placeholder.com/150",
-        },
-        {
-            id: 2,
-            name: "Latte",
-            priceOptions: { iced: 80, blended: 90 },
-            stock: 8,
-            image: "https://via.placeholder.com/150",
-        },
-        {
-            id: 3,
-            name: "Mocha",
-            priceOptions: { iced: 85, blended: 95 },
-            stock: 6,
-            image: "https://via.placeholder.com/150",
-        },
-    ]);
     const [cart, setCart] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState("all");
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
+    const [products, setProducts] = useState([]);
+    const [clientSecret, setClientSecret] = useState(null); // Add state for clientSecret
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
-    const [quantities, setQuantities] = useState({});
 
-    const handleQuantityChange = (id, value) => {
-        const newQuantity = Math.max(1, parseInt(value) || 1);
-        setQuantities({ ...quantities, [id]: newQuantity });
-    };
 
-    const incrementQuantity = (id) => {
-        setQuantities({
-            ...quantities,
-            [id]: (quantities[id] || 1) + 1,
-        });
-    };
+    useEffect(() => {
+        AxiosInstance.get('api/products/')
+            .then((response) => {
+                console.log(" Products Data:", response.data);
+                setProducts(response.data);
+            })
+            .catch((error) => {
+                console.error('Error fetching products:', error);
+            });
+    }, []);
 
-    const decrementQuantity = (id) => {
-        setQuantities({
-            ...quantities,
-            [id]: Math.max(1, (quantities[id] || 1) - 1),
-        });
-    };
-
-    const addToCart = (product, option) => {
-        const quantity = quantities[product.id] || 1;
-        const existingItem = cart.find(
-            (item) => item.id === product.id && item.option === option
-        );
-
-        if (product.stock >= quantity) {
+    const addToCart = (product) => {
+        setCart(prevCart => {
+            const existingItem = prevCart.find(item => item.id === product.id);
             if (existingItem) {
-                setCart(
-                    cart.map((item) =>
-                        item.id === product.id && item.option === option
-                            ? { ...item, quantity: item.quantity + quantity }
-                            : item
-                    )
-                );
-            } else {
-                setCart([
-                    ...cart,
-                    {
-                        ...product,
-                        option,
-                        price: product.priceOptions[option],
-                        quantity,
-                    },
-                ]);
+                if (existingItem.quantity < product.stock) {
+                    return prevCart.map(item =>
+                        item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+                    );
+                } else {
+                    setSnackbarMessage("จำนวนสินค้าทั้งหมดไม่เพียงพอ");
+                    setSnackbarOpen(true);
+                    return prevCart;
+                }
             }
-            setProducts(
-                products.map((p) =>
-                    p.id === product.id
-                        ? { ...p, stock: p.stock - quantity }
-                        : p
-                )
-            );
-            setSnackbarMessage(`${product.name} (${option}) added to cart!`);
-            setSnackbarSeverity("success");
-            setSnackbarOpen(true);
+            return [...prevCart, { ...product, quantity: 1 }];
+        });
+        setSnackbarMessage(`${product.name} ถูกเพิ่มลงในตะกร้า`);
+        setSnackbarOpen(true);
+    };
+
+    const removeFromCart = (index) => {
+        setCart(cart.filter((_, i) => i !== index));
+    };
+
+    const increaseQuantity = (index) => {
+        const updatedCart = [...cart];
+        const item = updatedCart[index];
+        if (item.quantity < item.stock) {
+            updatedCart[index].quantity += 1;
+            setCart(updatedCart);
         } else {
-            setSnackbarMessage(`Not enough stock for ${product.name}!`);
-            setSnackbarSeverity("error");
+            setSnackbarMessage("จำนวนสินค้าทั้งหมดไม่เพียงพอ");
             setSnackbarOpen(true);
         }
     };
 
-    const removeFromCart = (index) => {
-        const removedItem = cart[index];
-        setCart(cart.filter((_, i) => i !== index));
-        setProducts(
-            products.map((p) =>
-                p.id === removedItem.id
-                    ? { ...p, stock: p.stock + removedItem.quantity }
-                    : p
-            )
-        );
-        setSnackbarMessage(`${removedItem.name} removed from cart!`);
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
+    const decreaseQuantity = (index) => {
+        const updatedCart = [...cart];
+        if (updatedCart[index].quantity > 1) {
+            updatedCart[index].quantity -= 1;
+            setCart(updatedCart);
+        } else {
+            removeFromCart(index);
+        }
     };
 
-    const totalPrice = cart.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0
-    );
+    const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-    const checkout = () => {
-        setCart([]);
-        setSnackbarMessage("Checkout successful!");
-        setSnackbarSeverity("success");
-        setSnackbarOpen(true);
+    const placeOrder = () => {
+        if (cart.length === 0) {
+            setSnackbarSeverity("error");
+            setSnackbarMessage("ตะกร้าว่างเปล่า!");
+            setSnackbarOpen(true);
+            return;
+        }
+    
+        // สร้างข้อมูล order ที่จะส่งไปยัง backend
+        const orderData = {
+            total_price: totalPrice, // ราคารวม
+            items: cart.map(item => ({
+                product_id: item.id, 
+                quantity: item.quantity, 
+                price: item.price
+            }))
+        };
+    
+        AxiosInstance.post("api/create-order/", orderData)
+            .then((response) => {
+                console.log("Order Response:", response.data);
+                
+                // ตรวจสอบว่ามี order_id ที่ได้รับกลับมาหรือไม่
+                if (response.data.order_id) {
+                    setSnackbarSeverity("success");
+                    setSnackbarMessage("สั่งซื้อสำเร็จ! รหัสคำสั่งซื้อ #" + response.data.order_id);
+                    setCart([]); // ล้างตะกร้าหลังจากสั่งซื้อสำเร็จ
+                } else {
+                    setSnackbarSeverity("error");
+                    setSnackbarMessage("สั่งซื้อสำเร็จ แต่ไม่ได้รับรหัสคำสั่งซื้อ");
+                }
+    
+                setSnackbarOpen(true);
+            })
+            .catch((error) => {
+                console.error("Order Error:", error.response?.data || error);
+            
+                let errorMessage = "เกิดข้อผิดพลาด";
+            
+                if (error.response) {
+                    errorMessage = error.response.data?.message || JSON.stringify(error.response.data);
+                } else if (error.request) {
+                    errorMessage = "ไม่สามารถติดต่อเซิร์ฟเวอร์ได้";
+                } else {
+                    errorMessage = error.message;
+                }
+            
+                setSnackbarSeverity("error");
+                setSnackbarMessage("ไม่สามารถทำการสั่งซื้อได้: " + errorMessage);
+                setSnackbarOpen(true);
+            });
+            
+    };
+    
+    
+    const handleCloseSnackbar = () => {
+        setSnackbarOpen(false);
     };
 
     return (
-        <Container sx={{ padding: 3, position: "relative" }}>
-            <Typography
-                variant="h4"
-                sx={{ fontWeight: "bold", marginBottom: 3, textAlign: "center" }}
-            >
-                Coffee Menu
+        <Container>
+            <Typography variant="h4" sx={{ fontWeight: "bold", textAlign: "center", mb: 3, color: "#4E342E" }}>
+                ขายหน้าร้าน
             </Typography>
 
-            <Grid container spacing={3}>
-                {products.map((product) => (
-                    <Grid item xs={12} sm={6} md={4} key={product.id}>
-                        <Card
-                            component={motion.div}
-                            whileHover={{ scale: 1.05 }}
-                            sx={{
-                                height: "100%",
-                                display: "flex",
-                                flexDirection: "column",
-                                justifyContent: "space-between",
-                                borderRadius: 2,
-                                boxShadow: 3,
-                                overflow: "hidden",
-                            }}
-                        >
-                            <CardMedia
-                                component="img"
-                                height="160"
-                                image={product.image}
-                                alt={product.name}
-                            />
-                            <CardContent>
-                                <Typography
-                                    variant="h6"
-                                    sx={{ fontWeight: "bold", textAlign: "center" }}
-                                >
-                                    {product.name}
-                                </Typography>
-                                <Typography
-                                    sx={{
-                                        textAlign: "center",
-                                        marginBottom: 1,
-                                        color: "text.secondary",
-                                    }}
-                                >
-                                    Iced: ฿{product.priceOptions.iced} | Blended: ฿{product.priceOptions.blended}
-                                </Typography>
-                                <Typography
-                                    sx={{
-                                        color: product.stock > 0 ? "success.main" : "error.main",
-                                        fontWeight: "bold",
-                                        textAlign: "center",
-                                    }}
-                                >
-                                    {product.stock > 0
-                                        ? `In Stock: ${product.stock}`
-                                        : "Out of Stock"}
-                                </Typography>
+            <Divider sx={{ mb: 2}} />
 
-                                {product.stock > 0 && (
-                                    <Box
-                                        sx={{
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            marginTop: 2,
+            {/* ปุ่มเลือกหมวดหมู่ */}
+            <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+                {categories.map((category) => (
+                    <Button
+                        key={category.value}
+                        variant={selectedCategory === category.value ? "contained" : "outlined"}
+                        onClick={() => {
+                            console.log(`กำลังแสดงหมวดหมู่: ${category.value}`);
+                            setSelectedCategory(category.value);
+                        }}
+                        sx={{ 
+                            mx: 1, 
+                            textTransform: "none", 
+                            fontWeight: 500,
+                            borderRadius: "80px", // ทำให้โค้งมากขึ้น
+                            padding: "4px 10px", // เพิ่ม padding เพื่อให้ดูสมส่วน
+                            backgroundColor: selectedCategory === category.value ? "#6D4C41" : "transparent",
+                            color: selectedCategory === category.value ? "#FFF" : "#6D4C41",
+                            borderColor: "#6D4C41",
+                            '&:hover': {
+                                backgroundColor: "#6D4C41",
+                                color: "#FFF",
+                                borderColor: "#6D4C41",
+                            }
+                        }}
+                    >
+                        {category.label}
+                    </Button>
+                ))}
+            </Box>
+
+            <Grid container spacing={3}>
+                {/* ส่วนแสดงสินค้า */}
+                <Grid item xs={12} md={8}>
+                    <Grid container spacing={3} sx={{ marginBottom: 4 }}>
+                        {products
+                            .filter((product) => selectedCategory === "all" || product.category === selectedCategory)
+                            .map((product) => (
+                                <Grid item xs={12} sm={6} md={4} key={product.id}>
+                                    <Card 
+                                        component={motion.div} 
+                                        whileHover={{ scale: 1.05 }} 
+                                        sx={{ 
+                                            borderRadius: 4, 
+                                            boxShadow: 5,
+                                            backgroundColor: "#FFF8E1",
+                                            transition: "transform 0.3s ease-in-out",
+                                            '&:hover': {
+                                                transform: "translateY(-5px)",
+                                            }
                                         }}
                                     >
-                                        <Button
-                                            variant="contained"
-                                            onClick={() => addToCart(product, "iced")}
-                                            sx={{ flexGrow: 1, marginRight: 1 }}
-                                        >
-                                            Iced
-                                        </Button>
-                                        <Button
-                                            variant="contained"
-                                            onClick={() => addToCart(product, "blended")}
-                                            sx={{ flexGrow: 1 }}
-                                        >
-                                            Blended
-                                        </Button>
-                                    </Box>
-                                )}
-
-                                <Box sx={{ display: "flex", marginTop: 2 }}>
-                                    <IconButton onClick={() => decrementQuantity(product.id)}>
-                                        <Remove />
-                                    </IconButton>
-                                    <TextField
-                                        type="number"
-                                        label="Qty"
-                                        value={quantities[product.id] || 1}
-                                        onChange={(e) =>
-                                            handleQuantityChange(product.id, e.target.value)
-                                        }
-                                        sx={{ width: 80 }}
-                                        InputProps={{
-                                            endAdornment: (
-                                                <InputAdornment position="end">
-                                                    <IconButton
-                                                        onClick={() => incrementQuantity(product.id)}
-                                                    >
-                                                        <Add />
-                                                    </IconButton>
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                    />
-                                </Box>
-                            </CardContent>
-                        </Card>
+                                        <CardMedia 
+                                            component="img" 
+                                            height="150" 
+                                            image={product.image} 
+                                            alt={product.name} 
+                                            sx={{ borderTopLeftRadius: 10, borderTopRightRadius: 5 }}
+                                        />
+                                        <CardContent sx={{ textAlign: "center" }}>
+                                            <Typography variant="h6" sx={{ fontWeight: 600, color: "#4E342E" }}>{product.name}</Typography>
+                                            <Typography sx={{ color: "text.secondary", mb: 1 }}>
+                                                ราคา: {product.price}฿ | คงเหลือ: {product.stock}
+                                            </Typography>
+                                            <Button 
+                                                variant="contained" 
+                                                color="success" 
+                                                onClick={() => addToCart(product)}
+                                                sx={{
+                                                    backgroundColor: "#6D4C41",
+                                                    '&:hover': {
+                                                        backgroundColor: "#4E342E",
+                                                    }
+                                                }}
+                                            >
+                                                เลือก
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
+                            ))}
                     </Grid>
-                ))}
+                </Grid>
+
+                {/* ส่วนตะกร้าสินค้า */}
+                <Grid item xs={12} md={4}>
+                    <Box sx={{ display: "flex", justifyContent: "center" }}>
+                        <Paper 
+                            sx={{ 
+                                maxWidth: 400, 
+                                width: "100%", 
+                                padding: 2, 
+                                boxShadow: 4, 
+                                backgroundColor: "#8D6E63", 
+                                color: "#FFF", 
+                                borderRadius: 4 
+                            }}
+                        >
+                            <Typography variant="h6" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", mb: 2, color: "#FFF" }}>
+                                <ShoppingCart sx={{ mr: 1.5 }} /> ตะกร้าสินค้า
+                            </Typography>
+                            <Divider sx={{ my: 1, borderColor: "#FFF" }} />
+                            {cart.length > 0 ? (
+                                <TableContainer>
+                                    <Table size="small">
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell sx={{ color: "#FFF" }}>สินค้า</TableCell>
+                                                <TableCell sx={{ color: "#FFF" }}>จำนวน</TableCell>
+                                                <TableCell align="right" sx={{ color: "#FFF" }}>ราคา</TableCell>
+                                                <TableCell align="right" sx={{ color: "#FFF" }}>ลบ</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {cart.map((item, index) => (
+                                                <TableRow key={index}>
+                                                    <TableCell sx={{ color: "#FFF" }}>{item.name}</TableCell>
+                                                    <TableCell>
+                                                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                                                            <IconButton onClick={() => decreaseQuantity(index)} sx={{ color: "#FFF" }}>
+                                                                <Remove />
+                                                            </IconButton>
+                                                            {item.quantity}
+                                                            <IconButton onClick={() => increaseQuantity(index)} sx={{ color: "#FFF" }}>
+                                                                <Add />
+                                                            </IconButton>
+                                                        </Box>
+                                                    </TableCell>
+                                                    <TableCell align="right" sx={{ color: "#FFF" }}>{item.price * item.quantity} ฿</TableCell>
+                                                    <TableCell align="right">
+                                                        <IconButton color="error" onClick={() => removeFromCart(index)} sx={{ color: "#FFF" }}>
+                                                            <Delete />
+                                                        </IconButton>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                            ) : (
+                                <Typography textAlign="center" sx={{ color: "#FFF" }}>ไม่มีสินค้าในตะกร้า</Typography>
+                            )}
+                            <Divider sx={{ my: 2, borderColor: "#FFF" }} />
+                            <Typography variant="h6" textAlign="center" sx={{ color: "#FFF" }}>รวมทั้งหมด: {totalPrice} ฿</Typography>
+                            <Button variant="contained" sx={{ width: "100%", mt: 2, backgroundColor: "#734620" , '&:hover': { backgroundColor: "#4E342E" }}} onClick={placeOrder}>
+                                ชำระเงิน
+                            </Button>
+                        </Paper>
+                    </Box>
+                </Grid>
             </Grid>
 
-            <Paper
-                sx={{
-                    position: "fixed",
-                    top: 16,
-                    right: 16,
-                    width: 350,
-                    padding: 2,
-                    maxHeight: "80vh",
-                    overflowY: "auto",
-                    boxShadow: 4,
-                    borderRadius: 3,
-                }}
-            >
-                <Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        marginBottom: 2,
-                    }}
-                >
-                    <ShoppingCart sx={{ marginRight: 1 }} />
-                    <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                        Shopping Cart
-                    </Typography>
-                </Box>
-
-                <Divider sx={{ marginBottom: 2 }} />
-
-                {cart.length > 0 ? (
-                    <TableContainer>
-                        <Table size="small">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>Item</TableCell>
-                                    <TableCell align="center">Option</TableCell>
-                                    <TableCell align="center">Qty</TableCell>
-                                    <TableCell align="right">Price</TableCell>
-                                    <TableCell align="right">Action</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {cart.map((item, index) => (
-                                    <TableRow key={index}>
-                                        <TableCell>{item.name}</TableCell>
-                                        <TableCell align="center">{item.option}</TableCell>
-                                        <TableCell align="center">
-                                            {item.quantity}
-                                        </TableCell>
-                                        <TableCell align="right">
-                                            ฿{item.price * item.quantity}
-                                        </TableCell>
-                                        <TableCell align="right">
-                                            <IconButton
-                                                color="error"
-                                                onClick={() => removeFromCart(index)}
-                                            >
-                                                <Delete />
-                                            </IconButton>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                ) : (
-                    <Typography>No items in the cart</Typography>
-                )}
-
-                {cart.length > 0 && (
-                    <Box sx={{ marginTop: 2 }}>
-                        <Typography
-                            variant="h6"
-                            sx={{ textAlign: "center", fontWeight: "bold" }}
-                        >
-                            Total: ฿{totalPrice}
-                        </Typography>
-                        <Button
-                            variant="contained"
-                            color="success"
-                            onClick={checkout}
-                            sx={{ width: "100%", marginTop: 2 }}
-                        >
-                            Checkout
-                        </Button>
-                    </Box>
-                )}
-            </Paper>
-
-            <Snackbar
-                open={snackbarOpen}
-                autoHideDuration={3000}
-                onClose={() => setSnackbarOpen(false)}
-            >
-                <Alert
-                    onClose={() => setSnackbarOpen(false)}
-                    severity={snackbarSeverity}
-                    sx={{ width: "100%" }}
-                >
-                    {snackbarMessage}
-                </Alert>
+            <Snackbar 
+                    open={snackbarOpen} 
+                    autoHideDuration={3000} 
+                    onClose={handleCloseSnackbar} 
+                    anchorOrigin={{ vertical: "top", horizontal: "right" }}
+                    >
+                    <Alert 
+                        onClose={handleCloseSnackbar} 
+                        severity={snackbarSeverity} 
+                        sx={{ 
+                        width: "100%", 
+                        maxWidth: 400,
+                        fontSize: 15,
+                        backgroundColor: snackbarSeverity === "success" ? "#C8E6C9" : "#FFCDD2", 
+                        color: snackbarSeverity === "success" ? "#2E7D32" : "#D32F2F",
+                        borderRadius: 2,
+                        }}
+                    >
+                        {snackbarMessage}
+                    </Alert>
             </Snackbar>
+
         </Container>
-    );
-};
+    )
+}
 
 export default Inventory;

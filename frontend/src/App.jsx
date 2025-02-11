@@ -9,10 +9,11 @@ import ManageMenu from './components/ManageMenu'
 import Inventory from './components/Inventory'
 import SalesSummary from './components/SalesSummary'
 import {Routes, Route, useLocation} from 'react-router-dom'
+import ProtectedRoute from './components/ProtectedRoutes'
 
 function App() {
   const location = useLocation()
-  const noNavbar = location.pathname === '/'
+  const noNavbar = location.pathname === "/" || location.pathname.includes("password")
 
 
   return (
@@ -27,7 +28,7 @@ function App() {
       <Navbar
       content={
         <Routes>
-          
+          {/* <Route element={<ProtectedRoute/>}>  */}
           <Route path="/home" element={<Home />} />
           <Route path="/customers" element={<Customers />} />
           <Route path="/about" element={<About />} />
@@ -35,7 +36,8 @@ function App() {
           <Route path="/managemenu" element={<ManageMenu />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/salessummary" element={<SalesSummary />} />
-
+          
+        {/* </Route> */}
         </Routes>
       }
       />

@@ -1,24 +1,23 @@
 import React, { useState } from "react"
-import axios from "axios"
-import { Box, Typography, TextField, Button, Snackbar, InputAdornment, 
-  IconButton,Alert } from "@mui/material";
+import { Box, Typography, TextField, Button, Snackbar, InputAdornment, IconButton, Alert } from "@mui/material"
 import { useNavigate } from "react-router-dom"
 import { Visibility, VisibilityOff } from "@mui/icons-material"
 import "@fontsource/pacifico"
-import './cs/login.css'
+import AxiosInstance from "./AxiosInstance"// นำเข้า AxiosInstance
+import "./cs/login.css"
 
 const Login = () => {
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [successMessage, setSuccessMessage] = useState("")
-  const [successSnackbarOpen, setSuccessSnackbarOpen] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [successSnackbarOpen, setSuccessSnackbarOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const navigate = useNavigate()
-  const bgColor = "#734620"
-  const textColor = "#fff"
+  const navigate = useNavigate();
+  const bgColor = "#734620";
+  const textColor = "#fff";
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -26,27 +25,28 @@ const Login = () => {
     setError("");
 
     try {
-      const response = await axios.post("http://127.0.0.1:8000/api/login/", {
+      const response = await AxiosInstance.post("api/login/", {
         username,
         password,
       });
 
-      localStorage.setItem("access_token", response.data.access)
-      localStorage.setItem("refresh_token", response.data.refresh)
+      localStorage.setItem("access_token", response.data.access);
+      localStorage.setItem("refresh_token", response.data.refresh);
 
       setSuccessMessage("เข้าสู่ระบบสำเร็จ!");
-      setSuccessSnackbarOpen(true); // เปิด Snackbar สำหรับข้อความสำเร็จ
+      setSuccessSnackbarOpen(true);
+
       setTimeout(() => {
-        navigate("/home");
-      }, 1000); // Navigate after 2 seconds
+        navigate("/home")
+      }, 1000);
 
     } catch (error) {
       if (error.response) {
-        setError("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง")
+        setError("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
       } else if (error.request) {
-        setError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้")
+        setError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
       } else {
-        setError("เกิดข้อผิดพลาดในการเข้าสู่ระบบ")
+        setError("เกิดข้อผิดพลาดในการเข้าสู่ระบบ");
       }
     } finally {
       setLoading(false);
@@ -54,7 +54,7 @@ const Login = () => {
   };
 
   const handleSuccessSnackbarClose = () => {
-    setSuccessSnackbarOpen(false); // ปิด Snackbar
+    setSuccessSnackbarOpen(false);
   };
 
   const handleClickShowPassword = () => {
@@ -68,11 +68,11 @@ const Login = () => {
         open={successSnackbarOpen}
         autoHideDuration={6000}
         onClose={handleSuccessSnackbarClose}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }} // กำหนดตำแหน่งตรงกลางด้านบน
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert 
           onClose={handleSuccessSnackbarClose} 
-          severity="success" // กำหนดสีพื้นหลังเป็นสีเขียว
+          severity="success"
           sx={{ width: '100%' }}
         >
           {successMessage}
@@ -80,20 +80,8 @@ const Login = () => {
       </Snackbar>
 
       <div className={"bb"}>
-        <Box
-          sx={{
-            display: "flex",
-            width: "100%",
-            height: "100vh",
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
+        <Box sx={{ display: "flex", width: "100%", height: "100vh" }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Box
               sx={{
                 backgroundImage: 'url("https://st.depositphotos.com/2235295/2688/i/450/depositphotos_26885089-stock-photo-coffee-cup-with-jute-bag.jpg")',
@@ -122,15 +110,7 @@ const Login = () => {
               }}
             >
               <Box className={"itemkbox"}>
-                <Box
-                  className={"title"}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
+                <Box className={"title"} sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                   <Typography variant="h4" mb={1} sx={{ fontFamily: "Pacifico, cursive", fontSize: "40px", color: "#6a4f4b" }}>
                     Welcome To Coffee
                   </Typography>
@@ -158,10 +138,7 @@ const Login = () => {
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position="end">
-                            <IconButton
-                              onClick={handleClickShowPassword}
-                              edge="end"
-                            >
+                            <IconButton onClick={handleClickShowPassword} edge="end">
                               {showPassword ? <VisibilityOff /> : <Visibility />}
                             </IconButton>
                           </InputAdornment>
@@ -170,10 +147,7 @@ const Login = () => {
                     />
 
                     {error && (
-                      <Typography
-                        variant="body2"
-                        sx={{ color: "red", textAlign: "center", mt: 1 }}
-                      >
+                      <Typography variant="body2" sx={{ color: "red", textAlign: "center", mt: 1 }}>
                         {error}
                       </Typography>
                     )}
@@ -189,9 +163,7 @@ const Login = () => {
                         fontFamily: "'cursive'",
                         fontSize: "15px",
                         borderRadius: "20px",
-                        '&:hover': {
-                          backgroundColor: '#643D1D',
-                        },
+                        '&:hover': { backgroundColor: '#643D1D' },
                       }}
                       type="submit"
                       disabled={loading}
